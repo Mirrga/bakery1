@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Заказ №<span th:text="${order.id}"></span></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="container mt-5">
+    <h1 class="mb-4">📦 Заказ №<span th:text="${order.id}"></span></h1>
+
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Информация о заказе</h5>
+            <span class="badge" 
+                  th:classappend="${order.status.name() == 'NEW'} ? 'bg-primary' : 
+                                   (${order.status.name() == 'CONFIRMED'} ? 'bg-info' : 
+                                   (${order.status.name() == 'READY'} ? 'bg-warning' : 
+                                   (${order.status.name() == 'COMPLETED'} ? 'bg-success' : 'bg-danger')))">
+                <span th:text="#{${'order.status.' + order.status.name()}}">НОВЫЙ</span>
+            </span>
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <p><strong>Дата оформления:</strong> <span th:text="${order.createdAt}">01.01.2024</span></p>
+                    <p><strong>Статус:</strong> 
+                        <span th:text="${order.status.name()}">NEW</span>
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Покупатель:</strong> <span th:text="${order.user.username}">user</span></p>
+                    <p><strong>Email:</strong> <span th:text="${order.user.email}">user@example.com</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>🛒 Товары в заказе</h5>
+        </div>
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Товар</th>
+                        <th>Цена</th>
+                        <th>Количество</th>
+                        <th>Сумма</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="item : ${order.items}">
+                        <td th:text="${item.product.name}">Название товара</td>
+                        <td th:text="${item.price + ' ₽'}">100 ₽</td>
+                        <td th:text="${item.quantity}">1</td>
+                        <td th:text="${item.price * item.quantity + ' ₽'}">100 ₽</td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr class="table-dark">
+                        <td colspan="3" class="text-end"><strong>Общая сумма:</strong></td>
+                        <td><strong th:text="${order.totalAmount + ' ₽'}">0 ₽</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="/orders/my" class="btn btn-secondary">← Мои заказы</a>
+        <a href="/products/catalog" class="btn btn-primary">Продолжить покупки</a>
+    </div>
+</div>
+
+</body>
+</html>

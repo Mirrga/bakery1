@@ -4,6 +4,12 @@
         <ul>
             <li><a href="/">О нас</a></li>
             <li><a href="/products">Меню</a></li>
+            <li th:if="${#authorization.expression('isAuthenticated()')}">
+                <a href="/orders/my">Мои заказы</a>
+            </li>
+            <li th:if="${#authorization.expression('isAuthenticated()')}">
+                <a href="/cart">Корзина</a>
+            </li>
             <li th:if="${#authorization.expression('isAnonymous()')}">
                 <a href="/login">Вход</a>
             </li>
