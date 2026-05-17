@@ -1,12 +1,12 @@
 package com.example.bakery.feature.cart.entity;
 
+import com.example.bakery.feature.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-
-import com.example.bakery.feature.cart.entity.CartItem;
 
 @Entity
 @Table(name = "carts")
@@ -17,8 +17,12 @@ public class Cart {
     private Long id;
 
     // Уникальный идентификатор сессии (для гостей) или ID пользователя
-    @Column(nullable = false, unique = true)
+    @Column(unique = true)
     private String sessionId;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", unique = true)
+    private User user;
 
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CartItem> items = new ArrayList<>();
