@@ -7,6 +7,7 @@ import lombok.Data;
 
 @Data
 public class RegistrationRequest {
+
     @NotBlank(message = "Имя пользователя обязательно")
     @Size(min = 3, max = 50, message = "Длина имени от 3 до 50 символов")
     private String username;
@@ -18,4 +19,7 @@ public class RegistrationRequest {
     @NotBlank(message = "Пароль обязателен")
     @Size(min = 6, message = "Пароль должен быть не менее 6 символов")
     private String password;
+
+    @NotBlank(message = "Подтверждение пароля обязательно")
+    private String confirmPassword;
 }

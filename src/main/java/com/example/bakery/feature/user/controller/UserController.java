@@ -33,7 +33,7 @@ public class UserController {
             return "user/register";
         }
         try {
-            userService.register(request);
+            userService.registerUser(request);
             return "redirect:/login?registered";
         } catch (RuntimeException e) {
             model.addAttribute("error", e.getMessage());
@@ -46,7 +46,7 @@ public class UserController {
     @ResponseBody
     public ResponseEntity<UserDto> getUserApi(@PathVariable Long id) {
         try {
-            UserDto user = userService.getByUsername("dummy"); // Заглушка, нужен поиск по ID в сервисе
+            UserDto user = userService.getUserByUsername("dummy"); // Заглушка, нужен поиск по ID в сервисе
             return ResponseEntity.ok(user);
         } catch (Exception e) {
             return ResponseEntity.notFound().build();

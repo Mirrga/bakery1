@@ -1,69 +1,72 @@
 package com.example.bakery.feature.product.service;
 
-import com.example.bakery.feature.product.dto.ProductDto;
+import com.example.bakery.feature.product.dto.ProductRequestDto;
 import com.example.bakery.feature.product.entity.Category;
 import com.example.bakery.feature.product.entity.Product;
 import com.example.bakery.feature.product.repository.CategoryRepository;
 import com.example.bakery.feature.product.repository.ProductRepository;
-import lombok.RequiredArgsConstructor;
+import com.example.bakery.global.exception.ResourceNotFoundException;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
 @Service
-@RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional
 public class ProductService {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
 
-    // Получение страницы товаров (для MVC View)
-    public Page<ProductDto> getProductsPage(int page, int size, String sortBy) {
-        Sort sort = Sort.by(Sort.Direction.ASC, sortBy != null ? sortBy : "name");
-        Page<Product> products = productRepository.findAll(PageRequest.of(page, size, sort));
-        return products.map(this::mapToDto);
+    public ProductService(ProductRepository productRepository, CategoryRepository categoryRepository) {
+        this.productRepository = productRepository;
+        this.categoryRepository = categoryRepository;
     }
 
-    // Получение одного товара
-    public ProductDto getProductById(Long id) {
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Товар не найден: " + id));
-        return mapToDto(product);
+    // Чтение с пагинацией
+    @Transactional(readOnly = true)
+    public Page<Product> findAll(Pageable pageable) {
+        return productRepository.findAll(pageable);
     }
 
-    // Создание товара (Admin only logic will be in Controller/Security)
-    @Transactional
-    public ProductDto createProduct(ProductDto dto) {
-        Category category = categoryRepository.findById(dto.categoryId())
-                .orElseThrow(() -> new RuntimeException("Категория не найдена: " + dto.categoryId()));
-
-        Product product = Product.builder()
-                .name(dto.name())
-                .description(dto.description())
-                .price(dto.price())
-                .imageUrl(dto.imageUrl())
-                .category(category)
-                .build();
-
-        Product saved = productRepository.save(product);
-        return mapToDto(saved);
+    // Чтение одного
+    @Transactional(readOnly = true)
+    public Product findById(Long id) {
+        return productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
     }
 
-    // Приватный маппер Entity -> DTO
-    private ProductDto mapToDto(Product p) {
-        return new ProductDto(
-                p.getId(),
-                p.getName(),
-                p.getDescription(),
-                p.getPrice(),
-                p.getImageUrl(),
-                p.getCategory().getId(),
-                p.getCategory().getName()
-        );
+    // Создание
+    public Product create(ProductRequestDto dto) {
+        Category category = categoryRepository.findById(dto.getCategoryId())
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + dto.getCategoryId()));
+
+        Product product = new Product();
+        product.setName(dto.getName());
+        product.setDescription(dto.getDescription());
+        product.setPrice(dto.getPrice());
+        product.setCategory(category);
+        
+        return productRepository.save(product);
+    }
+
+    // Обновление
+    public Product update(Long id, ProductRequestDto dto) {
+        Product product = findById(id);
+        Category category = categoryRepository.findById(dto.getCategoryId())
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + dto.getCategoryId()));
+
+        product.setName(dto.getName());
+        product.setDescription(dto.getDescription());
+        product.setPrice(dto.getPrice());
+        product.setCategory(category);
+
+        return productRepository.save(product);
+    }
+
+    // Удаление
+    public void delete(Long id) {
+        Product product = findById(id);
+        productRepository.delete(product);
     }
 }

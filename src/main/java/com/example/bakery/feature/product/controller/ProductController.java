@@ -1,10 +1,13 @@
 package com.example.bakery.feature.product.controller;
 
-import com.example.bakery.feature.product.dto.ProductDto;
+import com.example.bakery.feature.product.dto.ProductRequestDto;
+import com.example.bakery.feature.product.entity.Product;
 import com.example.bakery.feature.product.service.ProductService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -13,49 +16,83 @@ import org.springframework.web.bind.annotation.*;
 
 @Controller
 @RequestMapping("/products")
-@RequiredArgsConstructor
 public class ProductController {
 
     private final ProductService productService;
 
-    // 1. MVC Endpoint: Страница каталога (Thymeleaf)
-    @GetMapping
-    public String listProducts(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            Model model) {
-        
-        Page<ProductDto> productsPage = productService.getProductsPage(page, size, "name");
-        model.addAttribute("products", productsPage);
-        return "products/list"; // Имя шаблона Thymeleaf
+    public ProductController(ProductService productService) {
+        this.productService = productService;
     }
 
-    // 2. REST API Endpoint: Получить список JSON (для AJAX/jQuery)
+    // --- MVC Views (для Thymeleaf) ---
+    
+    @GetMapping
+    public String listProducts(Model model, @PageableDefault(size = 8) Pageable pageable) {
+        Page<Product> page = productService.findAll(pageable);
+        model.addAttribute("products", page);
+        return "products/list"; // Шаблон products/list.html
+    }
+
+    @GetMapping("/new")
+    public String showCreateForm(Model model) {
+        model.addAttribute("productDto", new ProductRequestDto());
+        return "products/form";
+    }
+
+    @GetMapping("/{id}/edit")
+    public String showEditForm(@PathVariable Long id, Model model) {
+        Product product = productService.findById(id);
+        ProductRequestDto dto = new ProductRequestDto();
+        dto.setName(product.getName());
+        dto.setDescription(product.getDescription());
+        dto.setPrice(product.getPrice());
+        dto.setCategoryId(product.getCategory().getId());
+        
+        model.addAttribute("productDto", dto);
+        model.addAttribute("productId", id);
+        return "products/form";
+    }
+
+    // --- REST API Endpoints ---
+
     @GetMapping("/api")
     @ResponseBody
-    public ResponseEntity<Page<ProductDto>> apiListProducts(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(productService.getProductsPage(page, size, "name"));
+    public ResponseEntity<Page<Product>> getProductsApi(@PageableDefault(size = 10) Pageable pageable) {
+        return ResponseEntity.ok(productService.findAll(pageable));
     }
 
-    // 3. REST API Endpoint: Создать товар (JSON)
     @PostMapping("/api")
     @ResponseBody
-    public ResponseEntity<ProductDto> apiCreateProduct(@Valid @RequestBody ProductDto dto) {
-        ProductDto created = productService.createProduct(dto);
-        return ResponseEntity.status(201).body(created);
+    public ResponseEntity<?> createProductApi(@Valid @RequestBody ProductRequestDto dto, BindingResult result) {
+        if (result.hasErrors()) {
+            return ResponseEntity.badRequest().body(result.getAllErrors());
+        }
+        try {
+            Product created = productService.create(dto);
+            return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
     }
 
-    @GetMapping("/catalog")
-    public String showCatalog(
-            @RequestParam(defaultValue = "0") int page,
-            Model model) {
-        
-        // Получаем страницу товаров (по 9 штук, сортировка по имени)
-        Page<ProductDto> productsPage = productService.getProductsPage(page, 9, "name");
-        
-        model.addAttribute("products", productsPage);
-        return "products/catalog"; // Имя файла шаблона без .html
+    @PutMapping("/api/{id}")
+    @ResponseBody
+    public ResponseEntity<?> updateProductApi(@PathVariable Long id, @Valid @RequestBody ProductRequestDto dto, BindingResult result) {
+        if (result.hasErrors()) {
+            return ResponseEntity.badRequest().body(result.getAllErrors());
+        }
+        try {
+            Product updated = productService.update(id, dto);
+            return ResponseEntity.ok(updated);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/api/{id}")
+    @ResponseBody
+    public ResponseEntity<Void> deleteProductApi(@PathVariable Long id) {
+        productService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -1,14 +1,23 @@
 package com.example.bakery.config;
 
+import com.example.bakery.feature.user.entity.User;
+import com.example.bakery.feature.user.entity.UserRole;
+import com.example.bakery.feature.user.repository.UserRepository;
+import com.example.bakery.feature.user.repository.RoleRepository;
 import com.example.bakery.feature.product.entity.Category;
 import com.example.bakery.feature.product.entity.Product;
 import com.example.bakery.feature.product.repository.CategoryRepository;
 import com.example.bakery.feature.product.repository.ProductRepository;
+
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Bean;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -49,4 +58,5 @@ public class DataInitializer implements CommandLineRunner {
             System.out.println("✅ Тестовые данные успешно добавлены в БД!");
         }
     }
+
 }
